@@ -1,0 +1,11 @@
+/.vscode
+/default.sitemap
+/demo.items
+/docker-compose.yaml
+/mosquitto
+/mqtt-explorer-data
+/openhab-data
+/openhab_addons
+/openhab_userdata
+/usr
+/virtual.rules

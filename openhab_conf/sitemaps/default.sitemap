@@ -1,0 +1,26 @@
+sitemap default label="My Home Automation"
+{
+    Frame label="Smart Home"
+    {
+        Switch item=VirtualSensorSwitch label="Virtual Sensor Switch"
+        Text item=VirtualSensorMotionSensor label="Virtual Sensor Motion: [%d]"
+    }
+    Frame label="Thermometer" {
+        Text item=VirtualTemperature icon="temperature"
+        Text item=VirtualHumidity icon="humidity"
+    }
+    Frame label="Thermometer chart" {
+        Chart item=VirtualTemperature period=D refresh=60000
+        Chart item=VirtualHumidity period=D refresh=60000
+    } 
+    Frame label="Lighting" {
+        Switch item=Light_LivingRoom label="Living Room Light"
+    }
+
+    Frame label="HTTP API" {
+        Text item=ApiResponse label="Last API response"
+        Selection item=ApiRequest label="Send API command" mappings=["включити"="Включити","вимкнути"="Вимкнути"]
+    }
+}
+
+

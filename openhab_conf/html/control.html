@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Light Control</title>
+</head>
+<body>
+  <h3>Light control</h3>
+  <button style="background-color: greenyellow" onclick="sendCommandToItem('Light_LivingRoom','ON')">ON</button>
+  <button style="background-color: lightcoral" onclick="sendCommandToItem('Light_LivingRoom','OFF')">OFF</button>
+  <p>State: <span id="state"></span></p> 
+
+  <script>
+  function sendCommandToItem(itemName, command) {
+    fetch(`/rest/items/${itemName}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain'},
+      body: command
+    }).then(()=>updateState(itemName));
+  }
+
+  function sendApiRequest(){
+    const v = document.getElementById('cmd').value;
+    fetch('/rest/items/ApiRequest', {
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:v
+    }).then(()=> {
+      fetch('/rest/items/ApiResponse/state').then(r=>r.text()).then(t=>document.getElementById('response').innerText = t);
+      updateState('Light_LivingRoom');
+    });
+  }
+
+  function updateState(itemName){
+    fetch(`/rest/items/${itemName}/state`).then(r=>r.text()).then(t=>document.getElementById('state').innerText = t);
+  }
+
+  // initial load
+  updateState('Light_LivingRoom');
+  </script>
+</body>
+</html>

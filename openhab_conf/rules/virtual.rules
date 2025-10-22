@@ -1,0 +1,59 @@
+import java.util.Random
+
+var Timer t = null
+var double lastTemperature = 20.0
+var double lastHumidity = 50.0
+val Random rnd = new Random()
+
+rule "Update VirtualTemperature and VirtualHumidity every second"
+when
+    System started
+then
+    if (t === null) {
+        t = createTimer(now, [ |
+            val simulatedValue = (Math::random * 100) 
+
+            if (simulatedValue > 50) {
+                if ("VirtualSensorSwitch".toString == ON) {
+                    sendCommand("VirtualSensorSwitch", "OFF") 
+                } 
+                else {
+                    sendCommand("VirtualSensorSwitch", "ON") 
+                }
+            }
+            
+            var double time = ((now.getHour() * 60 + now.getMinute()) / 1440.0) * 2 * Math::PI           
+            var double newTemperature = 22 + Math::sin(time) * 3 + (rnd.nextDouble() - 0.5)
+            if (newTemperature > 40)  newTemperature = 40
+            if (newTemperature < -20) newTemperature = -20
+            lastTemperature = newTemperature
+
+            var double newHumidity = 50 + Math::cos(time) * 10 + (rnd.nextDouble() - 0.5)
+            if (newHumidity > 100) newHumidity = 100
+            if (newHumidity < 0)   newHumidity = 0
+            lastHumidity = newHumidity
+
+            postUpdate("VirtualTemperature", newTemperature.toString())
+            postUpdate("VirtualHumidity", newHumidity.toString())
+            postUpdate("VirtualSensorMotionSensor", simulatedValue.toString)
+            t.reschedule(now.plusSeconds(1))
+        ])
+    }
+end
+
+rule "HTTP Light Control"
+when
+    Item ApiRequest received command
+then
+    val String cmd = receivedCommand.toString.trim.toLowerCase
+    if (cmd == "включити" || cmd == "on") {
+        sendCommand("Light_LivingRoom", "ON")
+        postUpdate("ApiResponse", "OK: включено")
+    } else if (cmd == "вимкнути" || cmd == "off") {
+        sendCommand("Light_LivingRoom", "OFF")
+        postUpdate("ApiResponse", "OK: вимкнено")
+    } else {
+        postUpdate("ApiResponse", "ERROR: unknown command")
+    }
+    logInfo("HTTPLightControl", "API request: " + cmd)
+end
