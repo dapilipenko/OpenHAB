@@ -1,0 +1,10 @@
+Bridge mqtt:broker:mosquitto "Mosquitto Broker" [ host="mqtt-broker", port=1883 ] 
+
+Thing mqtt:topic:lab_device "Lab Device" (mqtt:broker:mosquitto) {
+    Channels:
+      Type number : temperature  "Temperature" [ stateTopic="home/lab/sensors/temperature" ]
+      Type number : humidity     "Humidity"    [ stateTopic="home/lab/sensors/humidity"]
+      Type switch : motion       "Motion"      [ stateTopic="home/lab/sensors/motion", on="ON", off="OFF" ]
+      Type switch : lamp_cmd     "Lamp Command" [ commandTopic="home/lab/lamp/cmd" ]
+      Type switch : lamp_state   "Lamp State"   [ stateTopic="home/lab/lamp/state", on="ON", off="OFF" ]
+}

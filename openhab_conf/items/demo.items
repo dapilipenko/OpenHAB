@@ -1,8 +1,0 @@
-Switch VirtualSensorSwitch "Virtual Sensor Switch"
-Number VirtualSensorMotionSensor "Virtual Sensor Motion" 
-Number VirtualTemperature "Virtual Temperature [%.1f °C]"
-Number VirtualHumidity "Virtual Humidity [%.1f %%]"
-
-Switch Light_LivingRoom "Living Room Light"
-String ApiRequest "HTTP API Request"
-String ApiResponse "HTTP API Response"

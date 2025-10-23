@@ -1,26 +1,12 @@
-sitemap default label="My Home Automation"
+sitemap lab label="MQTT Lab"
 {
-    Frame label="Smart Home"
-    {
-        Switch item=VirtualSensorSwitch label="Virtual Sensor Switch"
-        Text item=VirtualSensorMotionSensor label="Virtual Sensor Motion: [%d]"
+     Frame label="Sensors" {
+        Text item=Lab_Temperature
+        Text item=Lab_Humidity
+        Switch item=Lab_Motion
     }
-    Frame label="Thermometer" {
-        Text item=VirtualTemperature icon="temperature"
-        Text item=VirtualHumidity icon="humidity"
-    }
-    Frame label="Thermometer chart" {
-        Chart item=VirtualTemperature period=D refresh=60000
-        Chart item=VirtualHumidity period=D refresh=60000
-    } 
-    Frame label="Lighting" {
-        Switch item=Light_LivingRoom label="Living Room Light"
-    }
-
-    Frame label="HTTP API" {
-        Text item=ApiResponse label="Last API response"
-        Selection item=ApiRequest label="Send API command" mappings=["включити"="Включити","вимкнути"="Вимкнути"]
+    Frame label="Lamp" {
+        Switch item=Lab_Lamp_CMD label="Lamp (control)"
+        Text item=Lab_Lamp_State label="Lamp state"
     }
 }
-
-

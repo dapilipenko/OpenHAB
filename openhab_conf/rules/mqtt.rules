@@ -1,0 +1,103 @@
+var Timer lampOffTimer = null
+val Number TEMP_THRESHOLD = 21.0
+val Number TEMP_MIN = -20.0
+val Number TEMP_MAX = 60.0
+val Number HUM_MIN = 0.0
+val Number HUM_MAX = 100.0
+val Number EMA_ALPHA = 0.3           
+val Number DELTA_WARN = 5.0
+
+var Number avgTemp = null
+var Number avgHum = null
+
+rule "Turn on lamp on motion when cold"
+when
+    Item Lab_Motion changed to ON
+then
+    var Number tempForDecision = null
+    if (avgTemp !== null) {
+        tempForDecision = avgTemp
+    } else if (Lab_Temperature.state instanceof Number) {
+        tempForDecision = (Lab_Temperature.state as Number)
+    }
+
+    if (tempForDecision === null) {
+        sendCommand("Lab_Lamp_CMD", "ON")
+    } else {
+        if (tempForDecision.floatValue < TEMP_THRESHOLD) {
+            sendCommand("Lab_Lamp_CMD", "ON")
+            if (lampOffTimer !== null) { lampOffTimer.cancel(); lampOffTimer = null }
+        }
+    }
+end
+
+rule "Auto switch off lamp after no motion"
+when
+    Item Lab_Motion changed to OFF
+then
+    if (lampOffTimer !== null) { lampOffTimer.cancel() }
+    lampOffTimer = createTimer(now.plusSeconds(30), [ |
+        sendCommand("Lab_Lamp_CMD", "OFF")
+        lampOffTimer = null
+    ])
+end
+
+rule "Process sensors (validation + EMA)"
+when
+    Item Lab_Temperature changed or
+    Item Lab_Humidity changed
+then
+    var Number rawT = null
+    var Number rawH = null
+    if (Lab_Temperature.state instanceof Number) rawT = (Lab_Temperature.state as Number)
+    if (Lab_Humidity.state instanceof Number)    rawH = (Lab_Humidity.state as Number)
+
+    if (rawT !== null) {
+        if (rawT.floatValue >= TEMP_MIN && rawT.floatValue <= TEMP_MAX) {
+            if (avgTemp === null) {
+                avgTemp = rawT.floatValue
+            } else {
+                avgTemp = (EMA_ALPHA * rawT.floatValue) + ((1 - EMA_ALPHA) * avgTemp.floatValue)
+            }
+        } else {
+            logWarn("mqtt.rules", "Temperature out of range -> ignore: {}", rawT)
+        }
+    } else {
+        logInfo("mqtt.rules", "Temperature state is NULL or not a number")
+    }
+
+    if (rawH !== null) {
+        if (rawH.floatValue >= HUM_MIN && rawH.floatValue <= HUM_MAX) {
+            if (avgHum === null) {
+                avgHum = rawH.floatValue
+            } else {
+                avgHum = (EMA_ALPHA * rawH.floatValue) + ((1 - EMA_ALPHA) * avgHum.floatValue)
+            }
+        } else {
+            logWarn("mqtt.rules", "Humidity out of range -> ignore: {}", rawH)
+        }
+    } else {
+        logInfo("mqtt.rules", "Humidity state is NULL or not a number")
+    }
+
+    if (rawT !== null && avgTemp !== null) {
+        val Number diff = java.lang.Math.abs(rawT.floatValue - avgTemp.floatValue)
+        if (diff.floatValue >= DELTA_WARN) {
+            logInfo("mqtt.rules", "Large temp change: raw={} avg={}", rawT, avgTemp)
+        }
+    }
+end
+
+rule "Sync lamp state when command sent"
+when
+    Item Lab_Lamp_CMD received command
+then
+    postUpdate("Lab_Lamp_State", receivedCommand.toString)
+end
+
+rule "Sync lamp command when external state changes"
+when
+    Item Lab_Lamp_State changed
+then
+    postUpdate("Lab_Lamp_CMD", Lab_Lamp_State.state.toString)
+end
