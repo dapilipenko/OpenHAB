@@ -1,0 +1,24 @@
+sitemap lab label="Lab"
+{
+  Frame label="Sensors" {
+    Text item=Lab_Temperature
+    Text item=Lab_Humidity
+    Text item=Lab_Lux
+    Switch item=Lab_Motion
+  }
+
+  Frame label="Controls" {
+    Setpoint item=Lab_TargetTemperature minValue=5 maxValue=30 step=0.1
+    Slider item=Lab_FanSpeed minValue=0 maxValue=100
+    Text item=Lab_AlarmThreshold
+    Switch item=Lab_Lamp_Coil     label="Lamp"
+    Switch item=Lab_Heating_Coil  label="Heating"
+    Switch item=Lab_Alarm_Coil    label="Alarm"
+  }
+
+  Frame label="Raw / Diagnostics" {
+    Text item=Lab_Temperature label="Temp [%s]"
+    Text item=Lab_Humidity  label="Hum [%s]"
+    Text item=Lab_Motion    label="Motion [%s]"
+  }
+}

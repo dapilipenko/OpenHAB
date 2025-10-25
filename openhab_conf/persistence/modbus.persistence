@@ -1,0 +1,8 @@
+Strategies {
+    everyMinute : "0 * * * * ?"
+    default = everyChange
+}
+
+Items {
+    Lab_Temperature, Lab_Humidity, Lab_Lux : strategy = everyMinute
+}

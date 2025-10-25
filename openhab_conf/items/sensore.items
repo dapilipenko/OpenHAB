@@ -1,5 +1,0 @@
-Number Lab_Temperature "Temp [%.1f °C]" { channel="mqtt:topic:lab_device:temperature" }
-Number Lab_Humidity    "Humidity [%.1f %%]" { channel="mqtt:topic:lab_device:humidity" }
-Switch Lab_Motion      "Motion"              { channel="mqtt:topic:lab_device:motion" }
-Switch Lab_Lamp_CMD    "Lamp (command)"      { channel="mqtt:topic:lab_device:lamp_cmd" }
-Switch Lab_Lamp_State  "Lamp (state)"        { channel="mqtt:topic:lab_device:lamp_state" }

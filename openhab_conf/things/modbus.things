@@ -1,0 +1,21 @@
+Bridge modbus:tcp:modbusSimulator "Modbus TCP Bridge" [ host="modbus-server", port=5020, id=1, reconnect=5000 ] {
+    Bridge poller inputPoller [ start=0, length=4, refresh=1000, type="input" ] {
+        Thing data inTemp   "1.Input Temperature (30001)"  [ readStart="0", readValueType="int16" ]
+        Thing data inHum    "2.Input Humidity (30002)"     [ readStart="1", readValueType="int16" ]
+        Thing data inLux    "3.Input Lux (30003)"          [ readStart="2", readValueType="int16" ]
+        Thing data inMotion "4.Input Motion (30004)"       [ readStart="3", readValueType="int16" ]
+    }
+
+    Bridge poller holdingPoller [ start=0, length=3, refresh=1000, type="holding" ] {
+        Thing data tgtTemp        "5.Target Temperature (40001)" [ readStart="0", readValueType="int16", writeType="holding", writeStart="0", writeValueType="int16" ]
+        Thing data fanSpeed       "6.Fan Speed (40002)"         [ readStart="1", readValueType="int16", writeType="holding", writeStart="1", writeValueType="int16" ]
+        Thing data alarmThreshold "7.Alarm Threshold (40003)"    [ readStart="2", readValueType="int16", writeType="holding", writeStart="2", writeValueType="int16" ]
+    }
+
+    Bridge poller coilPoller [ start=0, length=3, refresh=1000, type="coil" ] {
+        Thing data lampCoil  "8.Lamp coil (00001)"  [ readStart="0", readValueType="bit", writeType="coil", writeStart="0", writeValueType="bit" ]
+        Thing data heatCoil  "9.Heating coil (00002)" [ readStart="1", readValueType="bit", writeType="coil", writeStart="1", writeValueType="bit" ]
+        Thing data alarmCoil "10.Alarm coil (00003)"   [ readStart="2", readValueType="bit", writeType="coil", writeStart="2", writeValueType="bit" ]
+    }
+}
+

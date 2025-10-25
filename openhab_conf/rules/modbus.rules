@@ -1,0 +1,125 @@
+import java.lang.Math
+import org.openhab.core.library.types.DecimalType
+
+var Timer lampOffTimer = null
+val Number LAMP_LUX_THRESHOLD = 300
+val Number LAMP_TEMP_THRESHOLD = 18.0
+val Number HEATING_OFFSET = 1.0
+
+// 1) Turn on lamp on motion if dark OR cold
+rule "Turn on lamp on motion when dark or cold"
+when
+    Item Lab_Motion changed to ON
+then
+    var boolean turnOn = false
+    if (Lab_Lux.state instanceof Number) {
+        if ((Lab_Lux.state as Number).intValue < LAMP_LUX_THRESHOLD) turnOn = true
+    } else {
+        // if no lux reading, fail-safe -> allow lamp on by motion
+        turnOn = true
+    }
+    if (!turnOn && (Lab_Temperature.state instanceof Number)) {
+        if ((Lab_Temperature.state as Number).floatValue < LAMP_TEMP_THRESHOLD) turnOn = true
+    }
+
+    if (turnOn) {
+        if (lampOffTimer !== null) { lampOffTimer.cancel(); lampOffTimer = null }
+        sendCommand(Lab_Lamp, ON)
+        logInfo("modbus.rules", "Lamp ON due to motion (dark/cold)")
+    }
+end
+
+// 2) Auto switch off lamp after no motion (30s)
+rule "Auto switch off lamp after no motion (30s)"
+when
+    Item Lab_Motion changed to OFF
+then
+    if (lampOffTimer !== null) lampOffTimer.cancel()
+    lampOffTimer = createTimer(now.plusSeconds(30), [ |
+        sendCommand(Lab_Lamp, OFF)
+        lampOffTimer = null
+        logInfo("modbus.rules", "Lamp auto-off after no motion")
+    ])
+end
+
+// 3) Multiply target temperature -> write holding register
+rule "Multiply target temperature"
+when
+    Item Lab_TargetTemperature received command
+then
+    var Number tgt = null
+    if (receivedCommand !== NULL && receivedCommand instanceof Number) {
+        tgt = receivedCommand as Number
+    } else if (Lab_TargetTemperature.state instanceof Number) {
+        tgt = Lab_TargetTemperature.state as Number
+    }
+    if (tgt !== null) {
+        val int writeVal = (tgt.floatValue * 10.0).intValue
+        // send numeric command to Modbus-bound item (Lab_TargetTemperature is bound to holding register)
+        sendCommand(Lab_TargetTemperature, new DecimalType(writeVal))
+        // reflect display value (optional)
+        Lab_TargetTemperature.postUpdate(String::format("%.1f", tgt.floatValue))
+    }
+end
+
+// 4) Heating control: ON if cur < target - 1°C
+rule "Heating ON if temp < target - 1°C"
+when
+    Item Lab_Temperature changed or
+    Item Lab_TargetTemperature changed
+then
+    if (Lab_Temperature.state instanceof Number && Lab_TargetTemperature.state instanceof Number) {
+        val Number cur = Lab_Temperature.state as Number
+        val Number tgt = Lab_TargetTemperature.state as Number
+        if (cur.floatValue < (tgt.floatValue - HEATING_OFFSET)) {
+            sendCommand(Lab_Heating, ON)
+            logInfo("modbus.rules", "Heating ON (cur " + cur + " < target-1 " + (tgt.floatValue - HEATING_OFFSET) + ")")
+        } else {
+            sendCommand(Lab_Heating, OFF)
+        }
+    }
+end
+
+// 5) Temperature alarm and indicators
+rule "Temperature alarm and indicators"
+when
+    Item Lab_Temperature changed or
+    Item Lab_AlarmThreshold changed
+then
+    if (!(Lab_Temperature.state instanceof Number) || !(Lab_AlarmThreshold.state instanceof Number)) return;
+    val Number cur = Lab_Temperature.state as Number
+    val Number thr = Lab_AlarmThreshold.state as Number
+    if (cur.floatValue > thr.floatValue) {
+        sendCommand(Lab_Lamp, ON)
+        sendCommand(Lab_Alarm, ON)
+        sendCommand(Lab_FanSpeed, new DecimalType(100))
+        logWarn("modbus.rules", "Temperature alarm triggered - current=" + cur + " threshold=" + thr)
+    } else {
+        sendCommand(Lab_Alarm, OFF)
+    }
+end
+
+// 6) Automatic fan speed based on temperature difference
+rule "Automatic fan speed"
+when
+    Item Lab_Temperature changed or
+    Item Lab_TargetTemperature changed
+then
+    if (Lab_Temperature.state instanceof Number && Lab_TargetTemperature.state instanceof Number) {
+        val Number cur = Lab_Temperature.state as Number
+        val Number tgt = Lab_TargetTemperature.state as Number
+        val Number diff = Math.abs(tgt.floatValue - cur.floatValue)
+        var Integer perc = 25
+        if (diff > 5.0) {
+            perc = 100
+        } else if (diff >= 3.0) {
+            perc = 75
+        } else if (diff >= 1.0) {
+            perc = 50
+        } else {
+            perc = 25
+        }
+        sendCommand(Lab_FanSpeed, new DecimalType(perc))
+        logInfo("modbus.rules", "Auto fan set to " + perc + "% (diff=" + diff + ")")
+    }
+end

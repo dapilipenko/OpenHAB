@@ -1,0 +1,12 @@
+Number Lab_Temperature        "Temp [%.1f °C]" { channel="modbus:data:modbusSimulator:inputPoller:inTemp:number" }
+Number Lab_Humidity           "Hum [%.1f %%]" { channel="modbus:data:modbusSimulator:inputPoller:inHum:number" }
+Number Lab_Lux                "Illuminance [%d lx]"{ channel="modbus:data:modbusSimulator:inputPoller:inLux:number" }
+Switch Lab_Motion             "Motion"{ channel="modbus:data:modbusSimulator:inputPoller:inMotion:switch" }
+
+Number Lab_TargetTemperature  "Target [%.1f °C]" { channel="modbus:data:modbusSimulator:holdingPoller:tgtTemp:number" }
+Number Lab_FanSpeed           "Fan [%d %%]" { channel="modbus:data:modbusSimulator:holdingPoller:fanSpeed:number" }
+Number Lab_AlarmThreshold     "Alarm Threshold" { channel="modbus:data:modbusSimulator:holdingPoller:alarmThreshold:number" }
+
+Switch Lab_Lamp               "Lamp" { channel="modbus:data:modbusSimulator:coilPoller:lampCoil:switch" }
+Switch Lab_Heating            "Heating" { channel="modbus:data:modbusSimulator:coilPoller:heatCoil:switch" }
+Switch Lab_Alarm              "Alarm" { channel="modbus:data:modbusSimulator:coilPoller:alarmCoil:switch" }
